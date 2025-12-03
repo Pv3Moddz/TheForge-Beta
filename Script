@@ -1,6 +1,5 @@
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local Player = game.Players.LocalPlayer
-
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local Window = Rayfield:CreateWindow({
     Name = "The Forge Beta (༗ Pv3Moddz </>)",
     Icon = 0, -- Icon in Topbar. Can use Lucide Icons (string) or Roblox Image (number). 0 to use no icon (default).
@@ -17,11 +16,25 @@ local Window = Rayfield:CreateWindow({
     },
 })
 
-local Tab = Window:CreateTab("Auto Farm", 4483362458)
-local Section = Tab:CreateSection("Miner Farm")
+local FarmTab = Window:CreateTab("Auto Farm", 4483362458)
 
-local Button = Tab:CreateButton({
-    Name = "Close Script",
+local Section = FarmTab:CreateSection("Miner Farm")
+local MineFarmDropdown = Section:CreateDropdown({
+   Name = "Stone Type",
+   Options = {"Pebble","Rock","Boulder"},
+   CurrentOption = {"Pebble"},
+   MultipleOptions = false,
+   Flag = "MineFarmDropdown", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(Options)
+   -- The function that takes place when the selected option is changed
+   -- The variable (Options) is a table of strings for the current selected options
+   end,
+})
+
+
+local Section = FarmTab:CreateSection("Close")
+local Button = FarmTab:CreateButton({
+    Name = "Remove Script",
     Callback = function()
         Rayfield:Destroy() -- The function that takes place when the button is pressed
     end,
