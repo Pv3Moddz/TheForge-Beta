@@ -1,6 +1,5 @@
 local Player = game.Players.LocalPlayer
 local Tween = game:GetService('TweenService')
-local TweenInfo = TweenInfo.new(1,Enum.EasingStyle.Linear)
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local Window = Rayfield:CreateWindow({
     Name = "The Forge Beta (༗ Pv3Moddz </>)",
@@ -20,23 +19,104 @@ local FarmTab = Window:CreateTab("Auto Farm", 4483362458)
 FarmTab:CreateSection("Auto Mine")
 local AutoMineDropdown = FarmTab:CreateDropdown({
     Name = "Stone Type",
-    Options = {"Pebble","Rock","Boulder"},
+    Options = {"Pebble", "Rock", "Boulder", "Lucky Block", "Basalt Rock", "Basalt Core", "Basalt Vein", "Volcanic Rock"},
     CurrentOption = {"Pebble"},
-    MultipleOptions = false,
+    MultipleOptions = true,
     Flag = "AutoMineDropdown",
     Callback = function(Options)
     end,
 })
+local AreaMineDropdown = FarmTab:CreateDropdown({
+    Name = "Area Miner",
+    Options = {"Island1CaveDeep", "Island1CaveMid", "Island1CaveStart", "Roof", "Island2CaveDanger1", "Island2CaveDanger2", "Island2CaveDanger3", "Island2CaveDanger4", "Island2CaveDangerClosed", "Island2CaveDeep", "Island2CaveLavaClosed", "Island2CaveMid", "Island2CaveStart", "Island2GoblinCave", "Island2VolcanicDepths"},
+    CurrentOption = {"Island1CaveDeep"},
+    MultipleOptions = true,
+    Flag = "AreaMineDropdown",
+    Callback = function(Options)
+    end,
+})
+local AutoMineRunning = false
 local AutoMinerToggle = FarmTab:CreateToggle({
     Name = "Enable AutoFarm",
     CurrentValue = false,
     Flag = "AutoMinerToggle",
     Callback = function(Value)
-        While Value == true do
-            local HRP = Player.Character.HumanoidRootPart
-            HRP.Anchor = true
-            -- Tween:Create(hrp,TweenInfo,{CFrame=CFrameV}):Play()
-        end,
+        AutoMineRunning = Value
+        if Value then
+            task.spawn(function()
+                while AutoMineRunning do
+                    task.wait()
+                    local HRP = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
+                    if not HRP then continue end
+                    local Target = nil
+                    local LastDist = math.huge
+                    for _, Area in ipairs(workspace.Rocks:GetChildren()) do
+                        for _, AreaName in ipairs(AreaMineDropdown.CurrentOption) do
+                            if string.find(Area.Name, AreaName, 1, true) then
+                                for _, SpawnLoc in ipairs(Area:GetChildren()) do
+                                    for _, Item in ipairs(SpawnLoc:GetChildren()) do
+                                        local DestPart = Item:FindFirstChild("Hitbox")
+                                        local Health = Item:GetAttribute("Health")
+                                        local MaxHealth = Item:GetAttribute("MaxHealth")
+                                        local LastHitPlayer = Item:GetAttribute("LastHitPlayer")
+                                        if DestPart and Health and MaxHealth then
+                                            if LastHitPlayer == Player.Name or Health == MaxHealth then
+                                                for _, StoneName in ipairs(AutoMineDropdown.CurrentOption) do
+                                                    if string.find(Item.Name, StoneName, 1, true) then
+                                                        local Dist = (DestPart.Position - HRP.Position).Magnitude
+                                                        if Dist < LastDist then
+                                                            LastDist = Dist
+                                                            Target = Item
+                                                        end
+                                                    end
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                    if Target then
+                        local Destination = Target:FindFirstChild("Hitbox")
+                        if Destination then
+                            local distance = (Destination.Position - HRP.Position).Magnitude
+                            local time = distance / 60
+                            local TPTween = Tween:Create(HRP, TweenInfo.new(time, Enum.EasingStyle.Linear), {CFrame = Destination.CFrame + Vector3.new(0,-5,0)})
+                            TPTween:Play()
+                            TPTween.Completed:Wait()
+                            HRP.Anchored = true
+                            local Continue = true
+                            local CurrentHealth = Target:GetAttribute("Health")
+                            while CurrentHealth and Target and CurrentHealth > 0 and AutoMineRunning and Continue do
+                                CurrentHealth = Target:GetAttribute("Health")
+                                game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Packages"):WaitForChild("Knit"):WaitForChild("Services"):WaitForChild("ToolService"):WaitForChild("RF"):WaitForChild("ToolActivated"):InvokeServer("Pickaxe")
+                                local Named = false
+                                for _, StoneName in ipairs(AutoMineDropdown.CurrentOption) do
+                                    if string.find(Target.Name, StoneName, 1, true) then
+                                        Named = true
+                                    end
+                                end
+                                local CurrentHRP = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
+                                if Destination and CurrentHRP and (Destination.Position - CurrentHRP.Position).Magnitude > 10 then Continue = false end
+                                if not Named then Continue = false end
+                                task.wait(0.1)
+                            end
+                            HRP.Anchored = false
+                            HRP.CFrame = HRP.CFrame + Vector3.new(0,10,0)
+                        end
+                    end
+                end
+            end)
+        end
+    end,
+})
+
+FarmTab:CreateSection("Camera")
+local CloseButton = FarmTab:CreateButton({
+    Name = "Enable Invisicam",
+    Callback = function()
+        Player.DevCameraOcclusionMode = Enum.DevCameraOcclusionMode.Invisicam
     end,
 })
 
