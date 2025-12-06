@@ -206,7 +206,7 @@ MobFarmToggle = MobFarmTab:CreateToggle({
                                 local TPTween = Tween:Create(HRP, TweenInfo.new((NpcHRP.Position - HRP.Position).Magnitude / TeleportSpeedSlider.CurrentValue, Enum.EasingStyle.Linear), {CFrame = NpcHRP.CFrame + (NpcHRP.CFrame.LookVector * MobFarmForwardSlider.CurrentValue) + (NpcHRP.CFrame.UpVector * MobFarmUpSlider.CurrentValue) + (NpcHRP.CFrame.RightVector * MobFarmRightSlider.CurrentValue)})
                                 TPTween:Play()
                                 TPTween.Completed:Wait()
-                                HRP.Anchored = true
+                                -- HRP.Anchored = true
                                 game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Packages"):WaitForChild("Knit"):WaitForChild("Services"):WaitForChild("ToolService"):WaitForChild("RF"):WaitForChild("ToolActivated"):InvokeServer("Weapon")
                                 local CurrentHRP = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
                                 if CurrentHRP and (NpcHRP.Position - CurrentHRP.Position).Magnitude > 10 then Continue = false end
@@ -265,6 +265,16 @@ MobFarmUpSlider = MobFarmTab:CreateSlider({
 
 local TeleportTab = Window:CreateTab("Teleport", 4483362458)
 TeleportTab:CreateSection("TeleportSpeed")
+local function TeleportFunction(Pos, NewPos)
+    local HRP = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
+    if HRP and TeleportSpeedSlider and not Teleporting then
+        Teleporting = true
+        local TPTween = Tween:Create(HRP, TweenInfo.new((Pos - HRP.Position).Magnitude / TeleportSpeedSlider.CurrentValue, Enum.EasingStyle.Linear), {CFrame = NewPos})
+        TPTween:Play()
+        TPTween.Completed:Wait()
+        Teleporting = false
+    end
+end
 TeleportSpeedSlider = TeleportTab:CreateSlider({
     Name = "Teleport Speed",
     Range = {30, 150},
@@ -281,14 +291,7 @@ TeleportTab:CreateButton({
     Callback = function()
         local Pos = Vector3.new(-193, 30, 160)
         local NewPos = CFrame.new(Pos, Pos + Vector3.new(0,0,1))
-        local HRP = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
-        if HRP and TeleportSpeedSlider and not Teleporting then
-            Teleporting = true
-            local TPTween = Tween:Create(HRP, TweenInfo.new((Pos - HRP.Position).Magnitude / TeleportSpeedSlider.CurrentValue, Enum.EasingStyle.Linear), {CFrame = NewPos})
-            TPTween:Play()
-            TPTween.Completed:Wait()
-            Teleporting = false
-        end
+        TeleportFunction(Pos, NewPos)
     end,
 })
 TeleportTab:CreateButton({
@@ -296,14 +299,7 @@ TeleportTab:CreateButton({
     Callback = function()
         local Pos = Vector3.new(-260, 20, 30)
         local NewPos = CFrame.new(Pos, Pos + Vector3.new(0,0,-1))
-        local HRP = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
-        if HRP and TeleportSpeedSlider and not Teleporting then
-            Teleporting = true
-            local TPTween = Tween:Create(HRP, TweenInfo.new((Pos - HRP.Position).Magnitude / TeleportSpeedSlider.CurrentValue, Enum.EasingStyle.Linear), {CFrame = NewPos})
-            TPTween:Play()
-            TPTween.Completed:Wait()
-            Teleporting = false
-        end
+        TeleportFunction(Pos, NewPos)
     end,
 })
 TeleportTab:CreateButton({
@@ -311,14 +307,7 @@ TeleportTab:CreateButton({
     Callback = function()
         local Pos = Vector3.new(-271, 20, 145)
         local NewPos = CFrame.new(Pos, Pos + Vector3.new(0,0,1))
-        local HRP = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
-        if HRP and TeleportSpeedSlider and not Teleporting then
-            Teleporting = true
-            local TPTween = Tween:Create(HRP, TweenInfo.new((Pos - HRP.Position).Magnitude / TeleportSpeedSlider.CurrentValue, Enum.EasingStyle.Linear), {CFrame = NewPos})
-            TPTween:Play()
-            TPTween.Completed:Wait()
-            Teleporting = false
-        end
+        TeleportFunction(Pos, NewPos)
     end,
 })
 TeleportTab:CreateButton({
@@ -326,14 +315,7 @@ TeleportTab:CreateButton({
     Callback = function()
         local Pos = Vector3.new(-95, 30, 89)
         local NewPos = CFrame.new(Pos, Pos + Vector3.new(1,0,1))
-        local HRP = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
-        if HRP and TeleportSpeedSlider and not Teleporting then
-            Teleporting = true
-            local TPTween = Tween:Create(HRP, TweenInfo.new((Pos - HRP.Position).Magnitude / TeleportSpeedSlider.CurrentValue, Enum.EasingStyle.Linear), {CFrame = NewPos})
-            TPTween:Play()
-            TPTween.Completed:Wait()
-            Teleporting = false
-        end
+        TeleportFunction(Pos, NewPos)
     end,
 })
 TeleportTab:CreateButton({
@@ -341,14 +323,7 @@ TeleportTab:CreateButton({
     Callback = function()
         local Pos = Vector3.new(-177, 30, 18)
         local NewPos = CFrame.new(Pos, Pos + Vector3.new(-1,0,-1))
-        local HRP = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
-        if HRP and TeleportSpeedSlider and not Teleporting then
-            Teleporting = true
-            local TPTween = Tween:Create(HRP, TweenInfo.new((Pos - HRP.Position).Magnitude / TeleportSpeedSlider.CurrentValue, Enum.EasingStyle.Linear), {CFrame = NewPos})
-            TPTween:Play()
-            TPTween.Completed:Wait()
-            Teleporting = false
-        end
+        TeleportFunction(Pos, NewPos)
     end,
 })
 TeleportTab:CreateButton({
@@ -356,18 +331,16 @@ TeleportTab:CreateButton({
     Callback = function()
         local Pos = Vector3.new(-113, 40, -35)
         local NewPos = CFrame.new(Pos, Pos + Vector3.new(1,0,-1))
-        local HRP = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
-        if HRP and TeleportSpeedSlider and not Teleporting then
-            Teleporting = true
-            local TPTween = Tween:Create(HRP, TweenInfo.new((Pos - HRP.Position).Magnitude / TeleportSpeedSlider.CurrentValue, Enum.EasingStyle.Linear), {CFrame = NewPos})
-            TPTween:Play()
-            TPTween.Completed:Wait()
-            Teleporting = false
-        end
+        TeleportFunction(Pos, NewPos)
     end,
 })
-
--- TeleporFunction()
--- end
+TeleportTab:CreateButton({
+    Name = "Merchant Wagon",
+    Callback = function()
+        local Pos = Vector3.new(-155, 30, 115)
+        local NewPos = CFrame.new(Pos, Pos + Vector3.new(0.5,0,1))
+        TeleportFunction(Pos, NewPos)
+    end,
+})
 
 Rayfield:SetVisibility(true)
