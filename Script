@@ -225,7 +225,7 @@ MobFarmToggle = MobFarmTab:CreateToggle({
 })
 MobFarmDropdown = MobFarmTab:CreateDropdown({
     Name = "MobSelect",
-    Options = {"Zombie", "Delver Zombie", "Elite Zombie", "Brute Zombie", "Bomber", "Skeleton Rogue", "Axe Skeleton", "Deathaxe Skeleton", "Elite Rogue Skeleton", "Elite Deathaxe Skeleton", "Reaper", "Slime", "Blazing Slime"},
+    Options = {"Zombie", "Delver Zombie", "EliteZombie", "Brute Zombie", "Bomber", "Skeleton Rogue", "Axe Skeleton", "Deathaxe Skeleton", "Elite Rogue Skeleton", "Elite Deathaxe Skeleton", "Reaper", "Slime", "Blazing Slime"},
     CurrentOption = {"Zombie"},
     MultipleOptions = true,
     Flag = "MobFarmDropdown",
@@ -280,13 +280,94 @@ TeleportTab:CreateButton({
     Name = "Forging Station",
     Callback = function()
         local Pos = Vector3.new(-193, 30, 160)
+        local NewPos = CFrame.new(Pos, Pos + Vector3.new(0,0,1))
         local HRP = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
-        if HRP and TeleportSpeedSlider then
-            local TPTween = Tween:Create(HRP, TweenInfo.new((Pos - HRP.Position).Magnitude / TeleportSpeedSlider.CurrentValue, Enum.EasingStyle.Linear), {CFrame = CFrame.new(Pos)})
+        if HRP and TeleportSpeedSlider and not Teleporting then
+            Teleporting = true
+            local TPTween = Tween:Create(HRP, TweenInfo.new((Pos - HRP.Position).Magnitude / TeleportSpeedSlider.CurrentValue, Enum.EasingStyle.Linear), {CFrame = NewPos})
             TPTween:Play()
             TPTween.Completed:Wait()
+            Teleporting = false
         end
     end,
 })
+TeleportTab:CreateButton({
+    Name = "Enhancer Shop",
+    Callback = function()
+        local Pos = Vector3.new(-260, 20, 30)
+        local NewPos = CFrame.new(Pos, Pos + Vector3.new(0,0,-1))
+        local HRP = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
+        if HRP and TeleportSpeedSlider and not Teleporting then
+            Teleporting = true
+            local TPTween = Tween:Create(HRP, TweenInfo.new((Pos - HRP.Position).Magnitude / TeleportSpeedSlider.CurrentValue, Enum.EasingStyle.Linear), {CFrame = NewPos})
+            TPTween:Play()
+            TPTween.Completed:Wait()
+            Teleporting = false
+        end
+    end,
+})
+TeleportTab:CreateButton({
+    Name = "Runemaker Shop",
+    Callback = function()
+        local Pos = Vector3.new(-271, 20, 145)
+        local NewPos = CFrame.new(Pos, Pos + Vector3.new(0,0,1))
+        local HRP = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
+        if HRP and TeleportSpeedSlider and not Teleporting then
+            Teleporting = true
+            local TPTween = Tween:Create(HRP, TweenInfo.new((Pos - HRP.Position).Magnitude / TeleportSpeedSlider.CurrentValue, Enum.EasingStyle.Linear), {CFrame = NewPos})
+            TPTween:Play()
+            TPTween.Completed:Wait()
+            Teleporting = false
+        end
+    end,
+})
+TeleportTab:CreateButton({
+    Name = "Pickaxe Shop",
+    Callback = function()
+        local Pos = Vector3.new(-95, 30, 89)
+        local NewPos = CFrame.new(Pos, Pos + Vector3.new(1,0,1))
+        local HRP = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
+        if HRP and TeleportSpeedSlider and not Teleporting then
+            Teleporting = true
+            local TPTween = Tween:Create(HRP, TweenInfo.new((Pos - HRP.Position).Magnitude / TeleportSpeedSlider.CurrentValue, Enum.EasingStyle.Linear), {CFrame = NewPos})
+            TPTween:Play()
+            TPTween.Completed:Wait()
+            Teleporting = false
+        end
+    end,
+})
+TeleportTab:CreateButton({
+    Name = "Weapon Buyer",
+    Callback = function()
+        local Pos = Vector3.new(-177, 30, 18)
+        local NewPos = CFrame.new(Pos, Pos + Vector3.new(-1,0,-1))
+        local HRP = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
+        if HRP and TeleportSpeedSlider and not Teleporting then
+            Teleporting = true
+            local TPTween = Tween:Create(HRP, TweenInfo.new((Pos - HRP.Position).Magnitude / TeleportSpeedSlider.CurrentValue, Enum.EasingStyle.Linear), {CFrame = NewPos})
+            TPTween:Play()
+            TPTween.Completed:Wait()
+            Teleporting = false
+        end
+    end,
+})
+TeleportTab:CreateButton({
+    Name = "Gem Buyer",
+    Callback = function()
+        local Pos = Vector3.new(-113, 40, -35)
+        local NewPos = CFrame.new(Pos, Pos + Vector3.new(1,0,-1))
+        local HRP = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
+        if HRP and TeleportSpeedSlider and not Teleporting then
+            Teleporting = true
+            local TPTween = Tween:Create(HRP, TweenInfo.new((Pos - HRP.Position).Magnitude / TeleportSpeedSlider.CurrentValue, Enum.EasingStyle.Linear), {CFrame = NewPos})
+            TPTween:Play()
+            TPTween.Completed:Wait()
+            Teleporting = false
+        end
+    end,
+})
+
+-- TeleporFunction()
+-- end
 
 Rayfield:SetVisibility(true)
