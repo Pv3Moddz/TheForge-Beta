@@ -162,12 +162,12 @@ MineFarmToggle = MinerFarmTab:CreateToggle({
                             end
                         end
                     end
-                    if Target then
+                    if Target and not Teleporting then
                         local Destination = Target:FindFirstChild("Hitbox")
                         if Destination and TeleportSpeedSlider and InstaTeleportSlider and MineFarmHeightSlider and MineFarmAnchorToggle then
                             local Continue = true
                             local CurrentHealth = Target:GetAttribute("Health")
-                            while CurrentHealth and Target and CurrentHealth > 0 and MineFarmRunning and Continue do
+                            while CurrentHealth and Target and CurrentHealth > 0 and MineFarmRunning and Continue and not Teleporting do
                                 local Pos = Destination.CFrame + Vector3.new(0,MineFarmHeightSlider.CurrentValue,0)
                                 local NewCFrame = CFrame.new(Pos.Position, Destination.Position)
                                 if (Destination.Position - HRP.Position).Magnitude < InstaTeleportSlider.CurrentValue then
@@ -275,11 +275,11 @@ MobFarmToggle = MobFarmTab:CreateToggle({
                             end
                         end
                     end
-                    if Target then
+                    if Target and not Teleporting then
                         local Continue = true
                         local NpcHRP = Target:FindFirstChild("HumanoidRootPart")
                         local NpcHumanoid = Target:FindFirstChild("Humanoid")
-                        while Target and Continue and MobFarmRunning do
+                        while Target and Continue and MobFarmRunning and not Teleporting do
                             local CurrentHRP = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
                             if CurrentHRP and NpcHRP and NpcHumanoid and NpcHumanoid.Health > 0 and TeleportSpeedSlider and InstaTeleportSlider and MobFarmAnchorToggle then
                                 HRP.Anchored = false
@@ -511,16 +511,23 @@ local function SellItem()
                 end
             end
         end
-        if Count > 0 then
+        if Count > 0 and TeleportSpeedSlider and InstaTeleportSlider then
+            while Teleporting do task.wait() end
+            Teleporting = true
             local HRP = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
-            local HRPPos = HRP.CFrame
-            HRP.Anchored = true
+            local NpcHRP = workspace.Proximity:FindFirstChild("Greedy Cey"):FindFirstChild("HumanoidRootPart")
+            local NewCFrame = NpcHRP.CFrame
+            if (NpcHRP.Position - HRP.Position).Magnitude < InstaTeleportSlider.CurrentValue then
+                HRP.CFrame = NewCFrame
+            end
+            local TPTween = Tween:Create(HRP, TweenInfo.new((NpcHRP.Position - HRP.Position).Magnitude / TeleportSpeedSlider.CurrentValue, Enum.EasingStyle.Linear), {CFrame = NewCFrame})
+            TPTween:Play()
+            TPTween.Completed:Wait()
             game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Packages"):WaitForChild("Knit"):WaitForChild("Services"):WaitForChild("ProximityService"):WaitForChild("RF"):WaitForChild("ForceDialogue"):InvokeServer(workspace:WaitForChild("Proximity"):WaitForChild("Greedy Cey"), "SellConfirmMisc")
             game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Packages"):WaitForChild("Knit"):WaitForChild("Services"):WaitForChild("DialogueService"):WaitForChild("RF"):WaitForChild("RunCommand"):InvokeServer("SellConfirm", {Basket = ItenList})
             game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Packages"):WaitForChild("Knit"):WaitForChild("Services"):WaitForChild("StatusService"):WaitForChild("RF"):WaitForChild("GetPlayerEquipmentInfo"):InvokeServer()
             game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Packages"):WaitForChild("Knit"):WaitForChild("Services"):WaitForChild("DialogueService"):WaitForChild("RE"):WaitForChild("DialogueEvent"):FireServer("Closed")
-            HRP.Anchored = false
-            HRP.CFrame = HRPPos
+            Teleporting = false
         end
     end
 end
@@ -549,8 +556,8 @@ AutoSellTab:CreateButton({
 })
 AutoSellMinerDropdown = AutoSellTab:CreateDropdown({
     Name = "Miners Select",
-    Options = {"Stone", "Sand Stone", "Copper", "Iron", "Tin", "Silver", "Gold", "Mushroomite", "Platinum", "Bananite", "Cardboardite", "Aite", "Poopite", "Fichillium", "Cobalt", "Titanium", "Volcanic Rock", "Lapis Lazuli", "Quartz", "Amethyst", "Topaz", "Diamond", "Sapphire", "Cuprite", "Obsidian", "Emerald", "Ruby", "Rivalite", "Uranium", "Mythril", "Eye Ore", "Fireite", "Magmaite", "Lightite", "Demonite", "Darkryte"},
-    CurrentOption = {},
+    Options = {"Boneite", "Dark Boneite", "Slimite", "Stone", "Sand Stone", "Copper", "Iron", "Tin", "Silver", "Gold", "Mushroomite", "Platinum", "Bananite", "Cardboardite", "Aite", "Poopite", "Fichillium", "Cobalt", "Titanium", "Volcanic Rock", "Lapis Lazuli", "Quartz", "Amethyst", "Topaz", "Diamond", "Sapphire", "Cuprite", "Obsidian", "Emerald", "Ruby", "Rivalite", "Uranium", "Mythril", "Eye Ore", "Fireite", "Magmaite", "Lightite", "Demonite", "Darkryte"},
+    CurrentOption = {"Stone", "Sand Stone", "Copper", "Iron", "Tin", "Silver", "Gold", "Mushroomite", "Platinum", "Bananite", "Cardboardite", "Aite", "Poopite", "Fichillium", "Cobalt", "Titanium", "Volcanic Rock", "Lapis Lazuli", "Quartz", "Amethyst", "Topaz", "Diamond", "Sapphire"},
     MultipleOptions = true,
     Flag = "AutoSellMinerDropdown",
     Callback = function(Options)
@@ -559,7 +566,7 @@ AutoSellMinerDropdown = AutoSellTab:CreateDropdown({
 AutoSellEssenceDropdown = AutoSellTab:CreateDropdown({
     Name = "Essences Select",
     Options = {"Tiny Essence", "Small Essence", "Medium Essence", "Greater Essence", "Epic Essence", "Superior Essence"},
-    CurrentOption = {},
+    CurrentOption = {"Tiny Essence", "Small Essence", "Medium Essence", "Greater Essence", "Epic Essence", "Superior Essence"},
     MultipleOptions = true,
     Flag = "AutoSellEssenceDropdown",
     Callback = function(Options)
@@ -567,7 +574,7 @@ AutoSellEssenceDropdown = AutoSellTab:CreateDropdown({
 })
 AutoSellSlider = AutoSellTab:CreateSlider({
     Name = "AutoSell Delay",
-    Range = {30, 120},
+    Range = {30, 300},
     Increment = 1,
     Suffix = "s",
     CurrentValue = 60,
