@@ -1,6 +1,10 @@
 local Player = game.Players.LocalPlayer
 local Tween = game:GetService("TweenService")
 local VirtualUser = game:GetService("VirtualUser")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local GuiService = game:GetService("GuiService")
+local RunService = game:GetService("RunService")
+local ForgeGUI = Player.PlayerGui:WaitForChild("Forge")
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local Window = Rayfield:CreateWindow({
     Name = "The Forge Beta (༗ Pv3Moddz </>)",
@@ -31,10 +35,13 @@ local MineFarmHeightSlider = nil
 local MobFarmRunning = false
 local MobFarmToggle = nil
 local MobFarmAnchorToggle = nil
+local SafeOnStunedToggle = nil
 local MobFarmDropdown = nil
 local MobFarmForwardSlider = nil
 local MobFarmRightSlider = nil
 local MobFarmUpSlider = nil
+
+local AutoHammerMinigame = false
 
 local TeleportSpeedSlider = nil
 local InstaTeleportSlider = nil
@@ -61,9 +68,49 @@ game:GetService("RunService").Stepped:Connect(function()
 		end
 	end
 end)
+ForgeGUI:WaitForChild("HammerMinigame").ChildAdded:Connect(function(Button)
+    if Button:IsA("TextButton") and AutoHammerMinigame then
+        local Frame = Button:WaitForChild("Frame")
+        local Border = Frame:WaitForChild("Border")
+        local Circle = Frame:WaitForChild("Circle")
+        local connection = RunService.RenderStepped:Connect(function()
+            if Button and Frame and Border and Circle then
+                if math.abs(Border.AbsoluteSize.X - Circle.AbsoluteSize.X) <= 20 and math.abs(Border.AbsoluteSize.Y - Circle.AbsoluteSize.Y) <= 20 then
+                    VirtualInputManager:SendMouseButtonEvent(Button.AbsolutePosition.X + Button.AbsoluteSize.X / 2, Button.AbsolutePosition.Y + Button.AbsoluteSize.Y / 2 + GuiService:GetGuiInset().Y, 0, true, game, 0)
+                    task.wait(0.05)
+                    VirtualInputManager:SendMouseButtonEvent(Button.AbsolutePosition.X + Button.AbsoluteSize.X / 2, Button.AbsolutePosition.Y + Button.AbsoluteSize.Y / 2 + GuiService:GetGuiInset().Y, 0, false, game, 0)
+                    connection:Disconnect()
+                end
+            else
+                connection:Disconnect()
+            end
+        end)
+    end
+end)
 
 local MainTab = Window:CreateTab("Main", 4483362458)
-MainTab:CreateSection("NoClip")
+MainTab:CreateSection("Moviment")
+MainTab:CreateToggle({
+    Name = "Safe On Stuned",
+    CurrentValue = false,
+    Flag = "SafeOnStunedToggle",
+    Callback = function(Value)
+        SafeOnStun = Value
+        task.spawn(function()
+            while SafeOnStun do
+                local Humanoid = Player.Character:FindFirstChild("Humanoid")
+                if Humanoid then
+                    if Player.Character:FindFirstChild("Status"):FindFirstChild("Stun") then
+                        Humanoid.HipHeight = 10
+                    else
+                        Humanoid.HipHeight = 0
+                    end
+                end
+                task.wait()
+            end
+        end)
+    end,
+})
 MainTab:CreateToggle({
     Name = "NoClip",
     CurrentValue = false,
@@ -179,7 +226,11 @@ MineFarmToggle = MinerFarmTab:CreateToggle({
                                 HRP.Anchored = MineFarmAnchorToggle.CurrentValue
                                 CurrentHealth = Target:GetAttribute("Health")
                                 game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Packages"):WaitForChild("Knit"):WaitForChild("Services"):WaitForChild("ToolService"):WaitForChild("RF"):WaitForChild("ToolActivated"):InvokeServer("Pickaxe")
-                                game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Packages"):WaitForChild("Knit"):WaitForChild("Services"):WaitForChild("ToolService"):WaitForChild("RF"):WaitForChild("ToolActivated"):InvokeServer("Weapon")
+                                -- game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Packages"):WaitForChild("Knit"):WaitForChild("Services"):WaitForChild("ToolService"):WaitForChild("RF"):WaitForChild("ToolActivated"):InvokeServer("Weapon")
+                                local Health = Target:GetAttribute("Health")
+                                local MaxHealth = Target:GetAttribute("MaxHealth")
+                                local LastHitPlayer = Target:GetAttribute("LastHitPlayer")
+                                if Health and MaxHealth and Health < MaxHealth and LastHitPlayer ~= Player.Name then Continue = false end
                                 local Named = false
                                 for _, StoneName in ipairs(MineFarmDropdown.CurrentOption) do
                                     if string.match(Target.Name, "^"..StoneName) then
@@ -354,6 +405,17 @@ MobFarmUpSlider = MobFarmTab:CreateSlider({
     end,
 })
 
+local ForgeTab = Window:CreateTab("Forge", 4483362458)
+ForgeTab:CreateSection("Forge options")
+ForgeTab:CreateToggle({
+    Name = "Auto HammerMinigame",
+    CurrentValue = false,
+    Flag = "AutoHammerMinigame",
+    Callback = function(Value)
+        AutoHammerMinigame = Value
+    end
+})
+
 local EspTab = Window:CreateTab("Esp", 4483362458)
 EspTab:CreateSection("Player Esp")
 EspTab:CreateToggle({
@@ -476,7 +538,9 @@ local TeleportLocations = {
     ["Pickaxe Shop"] = Vector3.new(-95, 30, 89),
     ["Weapon Buyer"] = Vector3.new(-177, 30, 18),
     ["Gem Buyer"] = Vector3.new(-113, 40, -35),
-    ["Merchant Wagon"] = Vector3.new(-155, 30, 115),
+    ["Potion Shop"] = Vector3.new(-155, 30, 115),
+    ["Weapon Seller Shop"] = Vector3.new(-155, 30, 115),
+    ["Wizard Tower"] = Vector3.new(-155, 30, 115),
 }
 for Name, Pos in pairs(TeleportLocations) do
     TeleportTab:CreateButton({
@@ -557,7 +621,7 @@ AutoSellTab:CreateButton({
 AutoSellMinerDropdown = AutoSellTab:CreateDropdown({
     Name = "Miners Select",
     Options = {"Boneite", "Dark Boneite", "Slimite", "Stone", "Sand Stone", "Copper", "Iron", "Tin", "Silver", "Gold", "Mushroomite", "Platinum", "Bananite", "Cardboardite", "Aite", "Poopite", "Fichillium", "Cobalt", "Titanium", "Volcanic Rock", "Lapis Lazuli", "Quartz", "Amethyst", "Topaz", "Diamond", "Sapphire", "Cuprite", "Obsidian", "Emerald", "Ruby", "Rivalite", "Uranium", "Mythril", "Eye Ore", "Fireite", "Magmaite", "Lightite", "Demonite", "Darkryte"},
-    CurrentOption = {"Stone", "Sand Stone", "Copper", "Iron", "Tin", "Silver", "Gold", "Mushroomite", "Platinum", "Bananite", "Cardboardite", "Aite", "Poopite", "Fichillium", "Cobalt", "Titanium", "Volcanic Rock", "Lapis Lazuli", "Quartz", "Amethyst", "Topaz", "Diamond", "Sapphire"},
+    CurrentOption = {"Boneite", "Dark Boneite", "Slimite", "Stone", "Sand Stone", "Copper", "Iron", "Tin", "Silver", "Gold", "Mushroomite", "Platinum", "Bananite", "Cardboardite", "Aite", "Poopite", "Fichillium", "Cobalt", "Titanium", "Volcanic Rock", "Lapis Lazuli", "Quartz", "Amethyst", "Topaz", "Diamond", "Sapphire"},
     MultipleOptions = true,
     Flag = "AutoSellMinerDropdown",
     Callback = function(Options)
@@ -566,7 +630,7 @@ AutoSellMinerDropdown = AutoSellTab:CreateDropdown({
 AutoSellEssenceDropdown = AutoSellTab:CreateDropdown({
     Name = "Essences Select",
     Options = {"Tiny Essence", "Small Essence", "Medium Essence", "Greater Essence", "Epic Essence", "Superior Essence"},
-    CurrentOption = {"Tiny Essence", "Small Essence", "Medium Essence", "Greater Essence", "Epic Essence", "Superior Essence"},
+    CurrentOption = {"Tiny Essence", "Small Essence", "Medium Essence", "Large Essence", "Greater Essence", "Epic Essence", "Superior Essence"},
     MultipleOptions = true,
     Flag = "AutoSellEssenceDropdown",
     Callback = function(Options)
