@@ -185,8 +185,8 @@ MineFarmToggle = MinerFarmTab:CreateToggle({
                     local Target = nil
                     local LastDist = math.huge
                     for _, Area in ipairs(workspace.Rocks:GetChildren()) do
-                        for _, AreaName in ipairs(AreaMineFarmDropdown.CurrentOption) do
-                            if string.find(Area.Name, AreaName, 1, true) then
+                        -- for _, AreaName in ipairs(AreaMineFarmDropdown.CurrentOption) do
+                            if table.find(AreaMineFarmDropdown.CurrentOption, Area.Name) or #AreaMineFarmDropdown.CurrentOption == 0 then
                                 for _, SpawnLoc in ipairs(Area:GetChildren()) do
                                     for _, Item in ipairs(SpawnLoc:GetChildren()) do
                                         local DestPart = Item:FindFirstChild("Hitbox")
@@ -209,7 +209,7 @@ MineFarmToggle = MinerFarmTab:CreateToggle({
                                     end
                                 end
                             end
-                        end
+                        -- end
                     end
                     if Target and not Teleporting then
                         local Destination = Target:FindFirstChild("Hitbox")
@@ -262,7 +262,7 @@ MineFarmAnchorToggle = MinerFarmTab:CreateToggle({
 })
 MineFarmDropdown = MinerFarmTab:CreateDropdown({
     Name = "Stone Type",
-    Options = {"Pebble", "Rock", "Boulder", "Lucky Block", "Basalt Rock", "Basalt Core", "Basalt Vein", "Volcanic Rock", "Crimson Crystal", "Cyan Crystal", "Earth Crystal", "Light Crystal", "Violet Crystal"},
+    Options = {"Pebble", "Rock", "Boulder", "Lucky Block", "Basalt Rock", "Basalt Core", "Basalt Vein", "Volcanic Rock", "Crimson Crystal", "Cyan Crystal", "Earth Crystal", "Light Crystal", "Violet Crystal", "Icy Pebble", "Icy Rock", "Icy Boulder", "Small Ice Crystal", "Medium Ice Crystal", "Large Ice Crystal", "Floating Crystal", "Unobtainable"},
     CurrentOption = {},
     MultipleOptions = true,
     Flag = "MineFarmDropdown",
@@ -271,7 +271,7 @@ MineFarmDropdown = MinerFarmTab:CreateDropdown({
 })
 AreaMineFarmDropdown = MinerFarmTab:CreateDropdown({
     Name = "Area Miner",
-    Options = {"Island1CaveDeep", "Island1CaveMid", "Island1CaveStart", "Roof", "Island2CaveDanger1", "Island2CaveDanger2", "Island2CaveDanger3", "Island2CaveDanger4", "Island2CaveDangerClosed", "Island2CaveDeep", "Island2CaveLavaClosed", "Island2CaveMid", "Island2CaveStart", "Island2GoblinCave", "Island2VolcanicDepths"},
+    Options = {"Island1CaveDeep", "Island1CaveMid", "Island1CaveStart", "Roof", "Island2CaveDanger1", "Island2CaveDanger2", "Island2CaveDanger3", "Island2CaveDanger4", "Island2CaveDangerClosed", "Island2CaveDeep", "Island2CaveLavaClosed", "Island2CaveMid", "Island2CaveStart", "Island2GoblinCave", "Island2VolcanicDepths", "Island3SpiderCaveStart", "Island3SpiderCaveStart0", "Island3SpiderCaveStart2", "Island3SpiderCaveMid", "Island3SpiderCaveMid2", "Island3CavePeakStart", "Island3CavePeakLeft", "Island3CavePeakRight", "Island3CavePeakEnd", "Island3RedCave"},
     CurrentOption = {},
     MultipleOptions = true,
     Flag = "AreaMineFarmDropdown",
