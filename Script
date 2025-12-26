@@ -28,6 +28,7 @@ local NoClip = false
 local MineFarmRunning = false
 local MineFarmToggle = nil
 local MineFarmAnchorToggle = nil
+local MineFarmAttackToggle = nil
 local MineFarmDropdown = nil
 local AreaMineFarmDropdown = nil
 local MineFarmHeightSlider = nil
@@ -50,6 +51,7 @@ local AutoSellRunning = false
 local AutoSellToggle = nil
 local AutoSellMinerDropdown = nil
 local AutoSellEssenceDropdown = nil
+local AutoSellRuneDropdown = nil
 local AutoSellSlider = nil
 
 Player.Idled:connect(function()
@@ -185,23 +187,21 @@ MineFarmToggle = MinerFarmTab:CreateToggle({
                     local Target = nil
                     local LastDist = math.huge
                     for _, Area in ipairs(workspace.Rocks:GetChildren()) do
-                        -- for _, AreaName in ipairs(AreaMineFarmDropdown.CurrentOption) do
-                            if table.find(AreaMineFarmDropdown.CurrentOption, Area.Name) or #AreaMineFarmDropdown.CurrentOption == 0 then
-                                for _, SpawnLoc in ipairs(Area:GetChildren()) do
-                                    for _, Item in ipairs(SpawnLoc:GetChildren()) do
-                                        local DestPart = Item:FindFirstChild("Hitbox")
-                                        local Health = Item:GetAttribute("Health")
-                                        local MaxHealth = Item:GetAttribute("MaxHealth")
-                                        local LastHitPlayer = Item:GetAttribute("LastHitPlayer")
-                                        if DestPart and Health and MaxHealth and Health > 0 then
-                                            if LastHitPlayer == Player.Name or Health == MaxHealth then
-                                                for _, StoneName in ipairs(MineFarmDropdown.CurrentOption) do
-                                                    if string.match(Item.Name, "^"..StoneName) then
-                                                        local Dist = (DestPart.Position - HRP.Position).Magnitude
-                                                        if Dist < LastDist then
-                                                            LastDist = Dist
-                                                            Target = Item
-                                                        end
+                        if table.find(AreaMineFarmDropdown.CurrentOption, Area.Name) or #AreaMineFarmDropdown.CurrentOption == 0 then
+                            for _, SpawnLoc in ipairs(Area:GetChildren()) do
+                                for _, Item in ipairs(SpawnLoc:GetChildren()) do
+                                    local DestPart = Item:FindFirstChild("Hitbox")
+                                    local Health = Item:GetAttribute("Health")
+                                    local MaxHealth = Item:GetAttribute("MaxHealth")
+                                    local LastHitPlayer = Item:GetAttribute("LastHitPlayer")
+                                    if DestPart and Health and MaxHealth and Health > 0 then
+                                        if LastHitPlayer == Player.Name or Health == MaxHealth then
+                                            for _, StoneName in ipairs(MineFarmDropdown.CurrentOption) do
+                                                if string.match(Item.Name, "^"..StoneName) then
+                                                    local Dist = (DestPart.Position - HRP.Position).Magnitude
+                                                    if Dist < LastDist then
+                                                        LastDist = Dist
+                                                        Target = Item
                                                     end
                                                 end
                                             end
@@ -209,7 +209,7 @@ MineFarmToggle = MinerFarmTab:CreateToggle({
                                     end
                                 end
                             end
-                        -- end
+                        end
                     end
                     if Target and not Teleporting then
                         local Destination = Target:FindFirstChild("Hitbox")
@@ -222,13 +222,16 @@ MineFarmToggle = MinerFarmTab:CreateToggle({
                                 if (Destination.Position - HRP.Position).Magnitude < InstaTeleportSlider.CurrentValue then
                                     HRP.CFrame = CFrame.new(NewCFrame.Position, Destination.Position)
                                 end
+                                task.wait()
                                 local TPTween = Tween:Create(HRP, TweenInfo.new((Destination.Position - HRP.Position).Magnitude / TeleportSpeedSlider.CurrentValue, Enum.EasingStyle.Linear), {CFrame = NewCFrame})
                                 TPTween:Play()
                                 TPTween.Completed:Wait()
                                 HRP.Anchored = MineFarmAnchorToggle.CurrentValue
                                 CurrentHealth = Target:GetAttribute("Health")
                                 game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Packages"):WaitForChild("Knit"):WaitForChild("Services"):WaitForChild("ToolService"):WaitForChild("RF"):WaitForChild("ToolActivated"):InvokeServer("Pickaxe")
-                                -- game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Packages"):WaitForChild("Knit"):WaitForChild("Services"):WaitForChild("ToolService"):WaitForChild("RF"):WaitForChild("ToolActivated"):InvokeServer("Weapon")
+                                if MineFarmAttackToggle and MineFarmAttackToggle.CurrentValue == true then
+                                    game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Packages"):WaitForChild("Knit"):WaitForChild("Services"):WaitForChild("ToolService"):WaitForChild("RF"):WaitForChild("ToolActivated"):InvokeServer("Weapon")
+                                end
                                 local Health = Target:GetAttribute("Health")
                                 local MaxHealth = Target:GetAttribute("MaxHealth")
                                 local LastHitPlayer = Target:GetAttribute("LastHitPlayer")
@@ -243,6 +246,7 @@ MineFarmToggle = MinerFarmTab:CreateToggle({
                                 if Destination and CurrentHRP and (Destination.Position - CurrentHRP.Position).Magnitude > 10 then Continue = false end
                                 if not Named then Continue = false end
                                 task.wait()
+                                -- HRP.Anchored = false
                             end
                             HRP.Anchored = false
                             HRP.CFrame = Destination.CFrame + Vector3.new(0,10,0)
@@ -257,6 +261,13 @@ MineFarmAnchorToggle = MinerFarmTab:CreateToggle({
     Name = "Anchor Character",
     CurrentValue = true,
     Flag = "MineFarmAnchorToggle",
+    Callback = function(Value)
+    end,
+})
+MineFarmAttackToggle = MinerFarmTab:CreateToggle({
+    Name = "Auto Attack",
+    CurrentValue = true,
+    Flag = "MineFarmAttackToggle",
     Callback = function(Value)
     end,
 })
@@ -369,7 +380,7 @@ MobFarmAnchorToggle = MobFarmTab:CreateToggle({
 })
 MobFarmDropdown = MobFarmTab:CreateDropdown({
     Name = "MobSelect",
-    Options = {"Zombie", "Delver Zombie", "EliteZombie", "Brute Zombie", "Bomber", "Skeleton Rogue", "Axe Skeleton", "Deathaxe Skeleton", "Elite Rogue Skeleton", "Elite Deathaxe Skeleton", "Blight Pyromancer", "Reaper", "Slime", "Blazing Slime"},
+    Options = {"Zombie", "Delver Zombie", "EliteZombie", "Brute Zombie", "Bomber", "Skeleton Rogue", "Axe Skeleton", "Deathaxe Skeleton", "Elite Rogue Skeleton", "Elite Deathaxe Skeleton", "Blight Pyromancer", "Reaper", "Slime", "Blazing Slime", "Crystal Spider", "Diamond Spider", "Prismarine Spider", "Common Orc", "Elite Orc"},
     CurrentOption = {},
     MultipleOptions = true,
     Flag = "MobFarmDropdown",
@@ -559,6 +570,7 @@ local function SellItem()
     if AutoSellMinerDropdown and AutoSellEssenceDropdown then
         local Itens = AutoSellMinerDropdown.CurrentOption
         for _, Item in ipairs(AutoSellEssenceDropdown.CurrentOption) do table.insert(Itens, Item) end
+        for _, Item in ipairs(AutoSellRuneDropdown.CurrentOption) do table.insert(Itens, Item) end
         local Inventory = game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Packages"):WaitForChild("Knit"):WaitForChild("Services"):WaitForChild("EnhanceService"):WaitForChild("RF"):WaitForChild("FindEquipmentByGUID"):InvokeServer().replica.Data.Inventory
         local ItenList = {}
         local Count = 0
@@ -567,6 +579,10 @@ local function SellItem()
                 for _, Item in pairs(Value) do
                     if Item.Name and Item.Quantity and table.find(Itens, tostring(Item.Name)) then
                         ItenList[Item.Name] = Item.Quantity
+                        Count += 1
+                    end
+                    if Item.Id and Item.GUID and table.find(Itens, tostring(Item.Id)) then
+                        ItenList[Item.GUID] = 1
                         Count += 1
                     end
                 end
@@ -622,7 +638,7 @@ AutoSellTab:CreateButton({
 })
 AutoSellMinerDropdown = AutoSellTab:CreateDropdown({
     Name = "Miners Select",
-    Options = {"Boneite", "Dark Boneite", "Slimite", "Stone", "Sand Stone", "Copper", "Iron", "Tin", "Silver", "Gold", "Mushroomite", "Platinum", "Bananite", "Cardboardite", "Aite", "Poopite", "Fichillium", "Cobalt", "Titanium", "Volcanic Rock", "Lapis Lazuli", "Quartz", "Amethyst", "Topaz", "Diamond", "Sapphire", "Cuprite", "Obsidian", "Emerald", "Ruby", "Rivalite", "Uranium", "Mythril", "Eye Ore", "Fireite", "Magmaite", "Lightite", "Demonite", "Darkryte"},
+    Options = {"Boneite", "Dark Boneite", "Slimite", "Stone", "Sand Stone", "Copper", "Iron", "Tin", "Silver", "Gold", "Mushroomite", "Platinum", "Bananite", "Cardboardite", "Aite", "Poopite", "Fichillium", "Cobalt", "Titanium", "Volcanic Rock", "Lapis Lazuli", "Quartz", "Amethyst", "Topaz", "Diamond", "Sapphire", "Cuprite", "Obsidian", "Emerald", "Ruby", "Rivalite", "Uranium", "Mythril", "Eye Ore", "Fireite", "Magmaite", "Lightite", "Demonite", "Darkryte", "Tungsten", "Sulfur", "Pumice", "Graphite", "Aetherit", "Scheelite", "Larimar", "Neurotite", "Frost Fossil", "Tide Carve", "Velchire", "Sanctis", "Snowite", "Iceite"},
     CurrentOption = {"Boneite", "Dark Boneite", "Slimite", "Stone", "Sand Stone", "Copper", "Iron", "Tin", "Silver", "Gold", "Mushroomite", "Platinum", "Bananite", "Cardboardite", "Aite", "Poopite", "Fichillium", "Cobalt", "Titanium", "Volcanic Rock", "Lapis Lazuli", "Quartz", "Amethyst", "Topaz", "Diamond", "Sapphire"},
     MultipleOptions = true,
     Flag = "AutoSellMinerDropdown",
@@ -635,6 +651,15 @@ AutoSellEssenceDropdown = AutoSellTab:CreateDropdown({
     CurrentOption = {"Tiny Essence", "Small Essence", "Medium Essence", "Large Essence", "Greater Essence", "Epic Essence", "Superior Essence"},
     MultipleOptions = true,
     Flag = "AutoSellEssenceDropdown",
+    Callback = function(Options)
+    end,
+})
+AutoSellRuneDropdown = AutoSellTab:CreateDropdown({
+    Name = "Rune Select",
+    Options = {"Pickaxe_T1", "Ice_T1", "Fire_T1", "Explosion_T1", "LifeSteal_T1", "Thorn_T1", "Berserker_T1"},
+    CurrentOption = {},
+    MultipleOptions = true,
+    Flag = "AutoSellRuneDropdown",
     Callback = function(Options)
     end,
 })
