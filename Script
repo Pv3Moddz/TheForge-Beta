@@ -23,7 +23,9 @@ local Window = Rayfield:CreateWindow({
 local Teleporting = false
 
 local AntiAfk = false
+local InfJump = false
 local NoClip = false
+local SpeedMultiplier = nil
 
 local MineFarmRunning = false
 local MineFarmToggle = nil
@@ -69,6 +71,13 @@ RunService.Stepped:Connect(function()
 			end
 		end
 	end
+    if SpeedMultiplier and SpeedMultiplier.CurrentValue > 1 and Player.Character then
+        local Humanoid = Player.Character:FindFirstChildOfClass("Humanoid")
+        local HRP = Player.Character:FindFirstChild("HumanoidRootPart")
+        if Humanoid and HRP and Humanoid.MoveDirection.Magnitude > 0 then
+            HRP.AssemblyLinearVelocity = Humanoid.MoveDirection * Humanoid.WalkSpeed * SpeedMultiplier.CurrentValue + Vector3.new(0, HRP.AssemblyLinearVelocity.Y, 0)
+        end
+    end
 end)
 ForgeGUI:WaitForChild("HammerMinigame").ChildAdded:Connect(function(Button)
     if Button:IsA("TextButton") and AutoHammerMinigame then
@@ -77,7 +86,7 @@ ForgeGUI:WaitForChild("HammerMinigame").ChildAdded:Connect(function(Button)
         local Circle = Frame:WaitForChild("Circle")
         local Connection = RunService.RenderStepped:Connect(function()
             if Button and Button.Parent and Frame and Border and Circle then
-                if math.abs(Border.AbsoluteSize.X - Circle.AbsoluteSize.X) <= 20 and math.abs(Border.AbsoluteSize.Y - Circle.AbsoluteSize.Y) <= 20 then
+                if math.abs(Border.AbsoluteSize.X - Circle.AbsoluteSize.X) <= 15 and math.abs(Border.AbsoluteSize.Y - Circle.AbsoluteSize.Y) <= 15 then
                     local PosX = Button.AbsolutePosition.X + Button.AbsoluteSize.X / 2
                     local PosY = Button.AbsolutePosition.Y + Button.AbsoluteSize.Y / 2 + GuiService:GetGuiInset().Y
                     VirtualInputManager:SendMouseButtonEvent(PosX, PosY, 0, true, game, 0)
@@ -89,6 +98,15 @@ ForgeGUI:WaitForChild("HammerMinigame").ChildAdded:Connect(function(Button)
                 Connection:Disconnect()
             end
         end)
+    end
+end)
+game:GetService("UserInputService").JumpRequest:Connect(function()
+    local Character = Player.Character
+    if Character and InfJump then
+        local Humanoid = Character:FindFirstChildOfClass("Humanoid")
+        if Humanoid then
+            Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
     end
 end)
 
@@ -116,11 +134,29 @@ MainTab:CreateToggle({
     end,
 })
 MainTab:CreateToggle({
+    Name = "Infinity Jump",
+    CurrentValue = false,
+    Flag = "InfinityJumpToggle",
+    Callback = function(Value)
+        InfJump = Value
+    end,
+})
+MainTab:CreateToggle({
     Name = "NoClip",
     CurrentValue = false,
     Flag = "NoClip",
     Callback = function(Value)
         NoClip = Value
+    end,
+})
+SpeedMultiplier = MainTab:CreateSlider({
+    Name = "Speed Multiplier",
+    Range = {1, 5},
+    Increment = 1,
+    Suffix = "x",
+    CurrentValue = 1,
+    Flag = "SpeedMultiplierSlider",
+    Callback = function(Value)
     end,
 })
 
@@ -273,7 +309,7 @@ MineFarmAttackToggle = MinerFarmTab:CreateToggle({
 })
 MineFarmDropdown = MinerFarmTab:CreateDropdown({
     Name = "Stone Type",
-    Options = {"Pebble", "Rock", "Boulder", "Lucky Block", "Basalt Rock", "Basalt Core", "Basalt Vein", "Volcanic Rock", "Crimson Crystal", "Cyan Crystal", "Earth Crystal", "Light Crystal", "Violet Crystal", "Icy Pebble", "Icy Rock", "Icy Boulder", "Small Ice Crystal", "Medium Ice Crystal", "Large Ice Crystal", "Floating Crystal", "Unobtainable"},
+    Options = {"Pebble", "Rock", "Boulder", "Lucky Block", "Basalt Rock", "Basalt Core", "Basalt Vein", "Volcanic Rock", "Crimson Crystal", "Cyan Crystal", "Earth Crystal", "Light Crystal", "Violet Crystal", "Icy Pebble", "Icy Rock", "Icy Boulder", "Small Ice Crystal", "Medium Ice Crystal", "Large Ice Crystal", "Floating Crystal"},
     CurrentOption = {},
     MultipleOptions = true,
     Flag = "MineFarmDropdown",
@@ -380,7 +416,7 @@ MobFarmAnchorToggle = MobFarmTab:CreateToggle({
 })
 MobFarmDropdown = MobFarmTab:CreateDropdown({
     Name = "MobSelect",
-    Options = {"Zombie", "Delver Zombie", "EliteZombie", "Brute Zombie", "Bomber", "Skeleton Rogue", "Axe Skeleton", "Deathaxe Skeleton", "Elite Rogue Skeleton", "Elite Deathaxe Skeleton", "Blight Pyromancer", "Reaper", "Slime", "Blazing Slime", "Crystal Spider", "Diamond Spider", "Prismarine Spider", "Common Orc", "Elite Orc"},
+    Options = {"Zombie", "Delver Zombie", "EliteZombie", "Brute Zombie", "Bomber", "Skeleton Rogue", "Axe Skeleton", "Deathaxe Skeleton", "Elite Rogue Skeleton", "Elite Deathaxe Skeleton", "Blight Pyromancer", "Reaper", "Slime", "Blazing Slime", "Crystal Spider", "Diamond Spider", "Prismarine Spider", "Common Orc", "Elite Orc", "Crystal Golem", "Yeti", "Golem"},
     CurrentOption = {},
     MultipleOptions = true,
     Flag = "MobFarmDropdown",
@@ -511,6 +547,9 @@ EspTab:CreateToggle({
     end,
 })
 
+EspTab:CreateSection("Monster Esp")
+
+
 local TeleportTab = Window:CreateTab("Teleport", 4483362458)
 TeleportTab:CreateSection("Teleport Settings")
 local function TeleportFunction(Pos, NewPos)
@@ -638,8 +677,8 @@ AutoSellTab:CreateButton({
 })
 AutoSellMinerDropdown = AutoSellTab:CreateDropdown({
     Name = "Miners Select",
-    Options = {"Boneite", "Dark Boneite", "Slimite", "Stone", "Sand Stone", "Copper", "Iron", "Tin", "Silver", "Gold", "Mushroomite", "Platinum", "Bananite", "Cardboardite", "Aite", "Poopite", "Fichillium", "Cobalt", "Titanium", "Volcanic Rock", "Lapis Lazuli", "Quartz", "Amethyst", "Topaz", "Diamond", "Sapphire", "Cuprite", "Obsidian", "Emerald", "Ruby", "Rivalite", "Uranium", "Mythril", "Eye Ore", "Fireite", "Magmaite", "Lightite", "Demonite", "Darkryte", "Tungsten", "Sulfur", "Pumice", "Graphite", "Aetherit", "Scheelite", "Larimar", "Neurotite", "Frost Fossil", "Tide Carve", "Velchire", "Sanctis", "Snowite", "Iceite"},
-    CurrentOption = {"Boneite", "Dark Boneite", "Slimite", "Stone", "Sand Stone", "Copper", "Iron", "Tin", "Silver", "Gold", "Mushroomite", "Platinum", "Bananite", "Cardboardite", "Aite", "Poopite", "Fichillium", "Cobalt", "Titanium", "Volcanic Rock", "Lapis Lazuli", "Quartz", "Amethyst", "Topaz", "Diamond", "Sapphire"},
+    Options = {"Boneite", "Dark Boneite", "Slimite", "Stone", "Sand Stone", "Copper", "Iron", "Tin", "Silver", "Gold", "Mushroomite", "Platinum", "Bananite", "Cardboardite", "Aite", "Poopite", "Fichillium", "Cobalt", "Titanium", "Volcanic Rock", "Lapis Lazuli", "Quartz", "Amethyst", "Topaz", "Diamond", "Sapphire", "Cuprite", "Obsidian", "Emerald", "Ruby", "Rivalite", "Uranium", "Mythril", "Eye Ore", "Fireite", "Magmaite", "Lightite", "Demonite", "Darkryte", "Tungsten", "Sulfur", "Pumice", "Graphite", "Aetherit", "Scheelite", "Larimar", "Neurotite", "Frost Fossil", "Tide Carve", "Velchire", "Sanctis", "Snowite", "Iceite", "Mistvein", "Lgarite", "Voidfractal", "Moltenfrost", "Crimsonite", "Malachite", "Aqujade", "Cryptex", "Galestor", "Voidstar", "Etherealite", "Suryafal", "Heavenite", "Gargantuan"},
+    CurrentOption = {"Boneite", "Dark Boneite", "Slimite", "Stone", "Sand Stone", "Copper", "Iron", "Tin", "Silver", "Gold", "Mushroomite", "Platinum", "Bananite", "Cardboardite", "Aite", "Poopite", "Fichillium", "Cobalt", "Titanium", "Volcanic Rock", "Lapis Lazuli", "Quartz", "Amethyst", "Topaz", "Diamond", "Sapphire", "Cuprite", "Obsidian", "Emerald", "Ruby", "Rivalite", "Uranium", "Mythril", "Eye Ore", "Fireite", "Tungsten", "Sulfur", "Pumice", "Graphite", "Aetherit", "Scheelite", "Larimar", "Neurotite", "Frost Fossil", "Tide Carve", "Mistvein", "Lgarite", "Voidfractal"},
     MultipleOptions = true,
     Flag = "AutoSellMinerDropdown",
     Callback = function(Options)
