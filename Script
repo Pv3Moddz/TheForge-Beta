@@ -5,6 +5,9 @@ local VirtualInputManager = game:GetService("VirtualInputManager")
 local GuiService = game:GetService("GuiService")
 local RunService = game:GetService("RunService")
 local ForgeGUI = Player.PlayerGui:WaitForChild("Forge")
+local MeltMinigame = ForgeGUI:WaitForChild("MeltMinigame")
+local PourMinigame = ForgeGUI:WaitForChild("PourMinigame")
+local HammerMinigame = ForgeGUI:WaitForChild("HammerMinigame")
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local Window = Rayfield:CreateWindow({
     Name = "The Forge Beta (༗ Pv3Moddz </>)",
@@ -12,7 +15,7 @@ local Window = Rayfield:CreateWindow({
     LoadingTitle = "The Forge Beta",
     LoadingSubtitle = "by ༗ Pv3Moddz </>",
     ShowText = "༗ Pv3Moddz </>",
-    Theme = "Dark Blue",
+    Theme = "AmberGlow",
     ToggleUIKeybind = "K",
     ConfigurationSaving = {
         Enabled = true,
@@ -44,6 +47,8 @@ local MobFarmForwardSlider = nil
 local MobFarmRightSlider = nil
 local MobFarmUpSlider = nil
 
+local AutoMeltMinigame = false
+local AutoPourMinigame = false
 local AutoHammerMinigame = false
 
 local TeleportSpeedSlider = nil
@@ -79,7 +84,45 @@ RunService.Stepped:Connect(function()
         end
     end
 end)
-ForgeGUI:WaitForChild("HammerMinigame").ChildAdded:Connect(function(Button)
+local function MeltMinigameStart()
+    task.wait(0.1)
+    local Top = MeltMinigame:FindFirstChild("Heater"):FindFirstChild("Top")
+    local InitX = Top.AbsolutePosition.X + Top.AbsoluteSize.X / 2
+    local InitY = Top.AbsolutePosition.Y + Top.AbsoluteSize.Y / 2 + GuiService:GetGuiInset().Y
+    if Top and InitX and InitY and AutoMeltMinigame then
+        while MeltMinigame.Visible do
+            VirtualInputManager:SendMouseButtonEvent(InitX, InitY, 0, true, game, 0)
+            VirtualInputManager:SendMouseMoveEvent(InitX, InitY + 1000, game)
+            task.wait()
+            VirtualInputManager:SendMouseMoveEvent(InitX, InitY, game)
+            VirtualInputManager:SendMouseButtonEvent(InitX, InitY, 0, false, game, 0)
+            task.wait()
+        end
+    end
+end
+MeltMinigame:GetPropertyChangedSignal("Visible"):Connect(MeltMinigameStart)
+local function PourMinigameStart()
+    task.wait(0.1)
+    local Area = PourMinigame:FindFirstChild("Frame"):FindFirstChild("Area")
+    local Line = PourMinigame:FindFirstChild("Frame"):FindFirstChild("Line")
+    if Area and Line and AutoPourMinigame then
+        while PourMinigame.Visible do
+            if Area.AbsolutePosition.Y < Line.AbsolutePosition.Y - (Area.AbsoluteSize.Y/2) then
+                local InitX = Line.AbsolutePosition.X + Line.AbsoluteSize.X / 2
+                local InitY = Line.AbsolutePosition.Y + Line.AbsoluteSize.Y / 2 + GuiService:GetGuiInset().Y
+                VirtualInputManager:SendMouseButtonEvent(InitX, InitY, 0, true, game, 0)
+                while PourMinigame.Visible and Area.AbsolutePosition.Y < Line.AbsolutePosition.Y - (Area.AbsoluteSize.Y/2) do
+                    task.wait()
+                end
+                VirtualInputManager:SendMouseButtonEvent(InitX, InitY, 0, false, game, 0)
+            end
+            task.wait()
+        end
+    end
+end
+PourMinigame:GetPropertyChangedSignal("Visible"):Connect(PourMinigameStart)
+HammerMinigame.ChildAdded:Connect(function(Button)
+    task.wait(0.1)
     if Button:IsA("TextButton") and AutoHammerMinigame then
         local Frame = Button:WaitForChild("Frame")
         local Border = Frame:WaitForChild("Border")
@@ -456,6 +499,34 @@ MobFarmUpSlider = MobFarmTab:CreateSlider({
 
 local ForgeTab = Window:CreateTab("Forge", 4483362458)
 ForgeTab:CreateSection("Forge options")
+ForgeTab:CreateButton({
+    Name = "Open Forge",
+    Callback = function()
+        game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Packages"):WaitForChild("Knit"):WaitForChild("Services"):WaitForChild("ProximityService"):WaitForChild("RF"):WaitForChild("Forge"):InvokeServer(workspace:WaitForChild("Proximity"):WaitForChild("Forge"))
+    end,
+})
+ForgeTab:CreateToggle({
+    Name = "Auto MeltMinigame",
+    CurrentValue = false,
+    Flag = "AutoMeltMinigame",
+    Callback = function(Value)
+        AutoMeltMinigame = Value
+        if AutoMeltMinigame then
+            MeltMinigameStart()
+        end
+    end
+})
+ForgeTab:CreateToggle({
+    Name = "Auto PourMinigame",
+    CurrentValue = false,
+    Flag = "AutoPourMinigame",
+    Callback = function(Value)
+        AutoPourMinigame = Value
+        if AutoPourMinigame then
+            PourMinigameStart()
+        end
+    end
+})
 ForgeTab:CreateToggle({
     Name = "Auto HammerMinigame",
     CurrentValue = false,
@@ -493,7 +564,7 @@ EspTab:CreateToggle({
                                 PlayerEspText.Name = "PlayerEspText"
                                 PlayerEspText.Parent = PlayerEspBillboard
                                 PlayerEspText.Size = UDim2.new(1,0,1,0)
-                                PlayerEspText.BackgroundTransparency = 1
+                                PlayerEspText.BackgroundTransparency = 0
                                 PlayerEspText.TextColor3 = Color3.new(1, 1, 1)
                                 PlayerEspText.TextStrokeTransparency = 0
                                 PlayerEspText.Text = CurrentPlayer.Name
@@ -548,6 +619,100 @@ EspTab:CreateToggle({
 })
 
 EspTab:CreateSection("Monster Esp")
+local MonsterEspDropdown = EspTab:CreateDropdown({
+    Name = "Monster Esp",
+    Options = MobFarmDropdown.Options,
+    CurrentOption = {},
+    MultipleOptions = true,
+    Flag = "MonsterEspDropdown",
+    Callback = function(Options)
+    end,
+})
+EspTab:CreateToggle({   
+    Name = "Enable Monster Esp",
+    CurrentValue = false,
+    Flag = "MonsterEsp",
+    Callback = function(Value)
+        MonsterEsp = Value
+        task.spawn(function()
+            if MonsterEsp then
+                while MonsterEsp do
+                    for _, CurrentMonster in ipairs(game.Workspace.Living:GetChildren()) do
+                        local IsNpc = CurrentMonster:GetAttribute("IsNpc")
+                        for _, MobName in ipairs(MonsterEspDropdown.CurrentOption) do
+                            if string.match(CurrentMonster.Name, "^"..MobName) and IsNpc then
+                                if CurrentMonster:FindFirstChild("MonsterEspBillboard") then
+                                    local Distance = math.floor((Player.Character:FindFirstChild("HumanoidRootPart").Position - CurrentMonster:FindFirstChild("HumanoidRootPart").Position).Magnitude) or 0
+                                    local Hp = math.floor(CurrentMonster:FindFirstChild("Humanoid").Health) or 0
+                                    local MaxHp = math.floor(CurrentMonster:FindFirstChild("Humanoid").MaxHealth) or 0
+                                    CurrentMonster.MonsterEspBillboard.MonsterEspText.Text = CurrentMonster.Name.." ( "..Distance.." Studs )".."\n"..Hp.." / "..MaxHp.." HP"
+                                else
+                                    local MonsterEspBillboard = Instance.new("BillboardGui")
+                                    MonsterEspBillboard.Name = "MonsterEspBillboard"
+                                    MonsterEspBillboard.Size = UDim2.new(1,0,1,0)
+                                    MonsterEspBillboard.Adornee = CurrentMonster.Head
+                                    MonsterEspBillboard.StudsOffset = Vector3.new(0,1.5,0)
+                                    MonsterEspBillboard.AlwaysOnTop = true
+                                    local MonsterEspText = Instance.new("TextLabel")
+                                    MonsterEspText.Name = "MonsterEspText"
+                                    MonsterEspText.Parent = MonsterEspBillboard
+                                    MonsterEspText.Size = UDim2.new(1,0,1,0)
+                                    MonsterEspText.BackgroundTransparency = 0
+                                    MonsterEspText.TextColor3 = Color3.fromRGB(255, 0, 0)
+                                    MonsterEspText.TextStrokeTransparency = 0
+                                    MonsterEspText.Text = CurrentMonster.Name
+                                    MonsterEspBillboard.Parent = CurrentMonster
+                                end
+                            end
+                        end
+                    end
+                    task.wait(1.0)
+                end
+                for _, CurrentMonster in ipairs(game.Workspace.Living:GetChildren()) do
+                    local IsNpc = CurrentMonster:GetAttribute("IsNpc")
+                    if IsNpc and CurrentMonster:FindFirstChild("MonsterEspBillboard") then
+                        CurrentMonster.MonsterEspBillboard:Destroy()
+                    end
+                end
+            end
+        end)
+    end,
+})
+EspTab:CreateToggle({
+    Name = "Enable Monster Highlight",
+    CurrentValue = false,
+    Flag = "MonsterHighlight",
+    Callback = function(Value)
+        MonsterHighlight = Value
+        task.spawn(function()
+            if MonsterHighlight then
+                while MonsterHighlight do
+                    for _, CurrentMonster in ipairs(game.Workspace.Living:GetChildren()) do
+                        local IsNpc = CurrentMonster:GetAttribute("IsNpc")
+                        for _, MobName in ipairs(MonsterEspDropdown.CurrentOption) do
+                            if string.match(CurrentMonster.Name, "^"..MobName) and IsNpc and not CurrentMonster:FindFirstChild("MonsterHighlight") then
+                                local MonsterHighlight = Instance.new("Highlight")
+                                MonsterHighlight.Name = "MonsterHighlight"
+                                MonsterHighlight.OutlineColor = Color3.fromRGB(255, 0, 0)
+                                MonsterHighlight.OutlineTransparency = 0.5
+                                MonsterHighlight.FillTransparency = 1
+                                MonsterHighlight.Adornee = CurrentMonster
+                                MonsterHighlight.Parent = CurrentMonster
+                            end
+                        end
+                    end
+                    task.wait(1.0)
+                end
+                for _, CurrentMonster in ipairs(game.Workspace.Living:GetChildren()) do
+                    local IsNpc = CurrentMonster:GetAttribute("IsNpc")
+                    if IsNpc and CurrentMonster:FindFirstChild("MonsterHighlight") then
+                        CurrentMonster.MonsterHighlight:Destroy()
+                    end
+                end
+            end
+        end)
+    end,
+})
 
 
 local TeleportTab = Window:CreateTab("Teleport", 4483362458)
